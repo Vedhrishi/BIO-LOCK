@@ -1,0 +1,13 @@
+# build output
+build/
+dist/
+dist_fast/
+*.zip
+build*.log
+__pycache__/
+*.pyc
+
+# private / generated at runtime - never commit face data or trial logs
+.biolock/
+logs/*.csv
+results/

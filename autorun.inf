@@ -1,0 +1,5 @@
+[autorun]
+open=BioLock.exe
+icon=BioLock.exe,0
+label=BioLock Secure Drive
+action=Unlock with BioLock
