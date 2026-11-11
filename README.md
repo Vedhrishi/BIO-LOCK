@@ -62,20 +62,24 @@ Use `--onedir` instead of `--onefile` for about 1 s start-up (the single file un
 - **Start-up / memory:** about 0.9 s to a visible window from source, 0.7–1.1 s for the one-folder build, about 65 MB
   idle (measured on the dev machine, camera off).
 
-## Evaluation (status: protocol ready, results not yet published)
+## Evaluation
 
-**Design targets (goals the system is tuned towards, not measured results):** impostor and attack false-accept rate (FAR) at or below 5 %, genuine false-reject rate (FRR) at or below 15 % in normal indoor light, unlock time of about 10–15 s including the liveness steps.
+**Measured (matcher only):** on the public LFW dataset (62 identities, dev/test split, 10 enrolment photos per identity),
+LBPH alone reaches AUC 0.81 / EER about 25 %; the weighted fusion with histogram and template scores did **not** improve on it
+(EER about 30 %), and at the default threshold of 40 the fused score gives FRR 26-52 % and FAR 9-38 % depending on the weights.
+This is a conservative, unconstrained-photo benchmark of the identity stage only. Full method, tables and caveats:
+[`docs/RESULTS_LFW.md`](docs/RESULTS_LFW.md); reproduce with `python experiments/benchmark_lfw.py` (needs `requirements-dev.txt`).
 
-No FAR/FRR/accuracy figures are claimed here because they have not been measured yet. Each verification trial is
-logged with its label (genuine / impostor / photo / phone / replay), lighting and movement tags, the match score and
-each liveness step on its own (`presence_pass`, `blink_pass`, `head_pass`, `failed_stage`). Follow
-[`docs/TESTING_GUIDE.md`](docs/TESTING_GUIDE.md), then run:
+**Not yet measured:** liveness, presentation attacks (photo / phone / replay) and end-to-end webcam FAR/FRR. No figures are
+claimed for these. Each live trial is logged with its label, lighting/movement tags, the match score and each liveness step
+(`presence_pass`, `blink_pass`, `head_pass`, `failed_stage`); follow [`docs/TESTING_GUIDE.md`](docs/TESTING_GUIDE.md), then run:
 
 ```bash
 python experiments/summarize_live_logs.py
 ```
 
-Offline sweeps over a folder of images are in `experiments/run_experiments.py` (see `docs/EXPERIMENTS.md`).
+Design targets (goals, not results): attack/impostor FAR at or below 5 %, genuine FRR at or below 15 % in normal indoor light.
+[`docs/PAPER_ALIGNMENT.md`](docs/PAPER_ALIGNMENT.md) lists where the code and the accompanying manuscript must agree.
 
 ## Tests
 
@@ -83,7 +87,7 @@ Offline sweeps over a folder of images are in `experiments/run_experiments.py` (
 python -m unittest tests.test_biolock -v
 ```
 
-25 tests: camera worker, enrolment quality gate, outlier pruning, model save/reload, metrics, liveness logging, and the
+27 tests: camera worker, enrolment quality gate, outlier pruning, model save/reload, metrics, liveness logging, and the
 external-drive rules. They use synthetic data and a fake camera; they do not measure real-world recognition accuracy.
 
 ## Limitations (please read)
@@ -102,7 +106,7 @@ config.py                 tunable parameters (threshold, weights, frames, ...)
 metrics.py                trial logging + FAR/FRR/accuracy/liveness breakdown
 experiments/              offline sweep + live-log summariser
 tests/                    unit tests (run in CI on Windows)
-docs/                     TESTING_GUIDE, EXPERIMENTS, HISTORY
+docs/                     TESTING_GUIDE, RESULTS_LFW, PAPER_ALIGNMENT, EXPERIMENTS, HISTORY
 ```
 
 ## History

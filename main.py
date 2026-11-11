@@ -519,10 +519,12 @@ class HeadTurn:
     L = 'left'
     R = 'right'
     D = 'done'
+    CALIB_OBS = 10          # observations used to establish the baseline (as described in the paper)
 
     def __init__(self):
         self.phase = self.L
         self.baseline = None
+        self._calib = []
         self._buf = []
         self.is_done = False
 
@@ -536,7 +538,11 @@ class HeadTurn:
         x, y, w, h = box
         cx = x + w / 2.0
         if self.baseline is None:
-            self.baseline = cx
+            # baseline = mean face-centre over the first CALIB_OBS observations
+            self._calib.append(cx)
+            if len(self._calib) < self.CALIB_OBS:
+                return (self.phase, False, 'Look at the camera - calibrating...', 'Head turn: calibrating')
+            self.baseline = float(np.mean(self._calib))
 
         delta_pct = (cx - self.baseline) / max(w, 1) * 100
         self._buf.append(delta_pct)

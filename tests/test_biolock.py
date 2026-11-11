@@ -214,5 +214,30 @@ def ctypes_gdt():
     return None
 
 
+class HeadTurnTests(unittest.TestCase):
+    def box(self, cx, w=100):
+        return (int(cx - w / 2), 50, w, w)
+
+    def test_calibrates_over_10_observations_then_needs_left_then_right(self):
+        h = M.HeadTurn()
+        for _ in range(9):
+            self.assertIn('calibrating', h.update(self.box(300))[2])
+        self.assertIsNone(h.baseline)
+        h.update(self.box(300))
+        self.assertAlmostEqual(h.baseline, 300, delta=1)
+        self.assertFalse(h.update(self.box(300))[1])       # no turn yet
+        self.assertFalse(h.update(self.box(300 + 20))[1])   # right first does not pass
+        h2 = M.HeadTurn()
+        for _ in range(10): h2.update(self.box(300))
+        h2.update(self.box(300 - 20))                       # left
+        self.assertTrue(h2.update(self.box(300 + 20))[1])   # then right -> pass
+
+    def test_baseline_is_robust_to_one_outlier(self):
+        h = M.HeadTurn()
+        for c in [300] * 9 + [330]:
+            h.update(self.box(c))
+        self.assertLess(abs(h.baseline - 300), 5)
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

@@ -14,7 +14,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['matplotlib', 'scipy', 'pandas', 'IPython', 'pytest'],
+    excludes=['matplotlib', 'scipy', 'pandas', 'IPython', 'pytest', 'sklearn'],
     noarchive=False,
     optimize=0,
 )
