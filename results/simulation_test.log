@@ -1,0 +1,30 @@
+olivetti: 400 photographs staged (3s)
+lfw: 3023 photographs staged (12s)
+
+olivetti: 281 simulated sessions (1179s)
+  not run because a photograph could not play its part: {'genuine': 7, 'impostor': 22, 'swap_bound': 6, 'swap_unbound': 7}
+  reasons: {'open eyes not detected steadily': 17, 'several faces detected': 6, 'painted-over eyes still detected': 19}
+  distinct photographs tried for a blinking role: {'usable': 104, 'open eyes not detected steadily': 10, 'several faces detected': 1, 'painted-over eyes still detected': 7}
+  scenario                     n  accepted 95% CI            stopped at                  
+  genuine                     64   60 93.8% [85.0-97.5%]  {'blink': 1, 'match': 3}
+  impostor                    86    1  1.2% [ 0.2- 6.3%]  {'blink': 2, 'match': 83}
+  photo_shaken                36    0  0.0% [ 0.0- 9.6%]  {'blink': 36}
+  photo_static_noise2         18    0  0.0% [ 0.0-17.6%]  {'presence': 18}
+  photo_static_noise5         18    0  0.0% [ 0.0-17.6%]  {'presence': 18}
+  swap_bound                  30    1  3.3% [ 0.6-16.7%]  {'match': 29}
+  swap_unbound                29   27 93.1% [78.0-98.1%]  {'blink': 1, 'match': 1}
+
+lfw: 385 simulated sessions (1179s)
+  not run because a photograph could not play its part: {'genuine': 41, 'impostor': 64, 'photo_static': 6, 'photo_shaken': 6, 'swap_bound': 28, 'swap_unbound': 28}
+  reasons: {'several faces detected': 75, 'open eyes not detected steadily': 75, 'painted-over eyes still detected': 29}
+  distinct photographs tried for a blinking role: {'usable': 172, 'several faces detected': 24, 'open eyes not detected steadily': 51, 'painted-over eyes still detected': 18}
+  scenario                     n  accepted 95% CI            stopped at                  
+  genuine                     83   44 53.0% [42.4-63.4%]  {'blink': 6, 'match': 33}
+  impostor                   122    1  0.8% [ 0.1- 4.5%]  {'blink': 8, 'match': 113}
+  photo_shaken                56    0  0.0% [ 0.0- 6.4%]  {'blink': 56}
+  photo_static_noise2         26    0  0.0% [ 0.0-12.9%]  {'presence': 26}
+  photo_static_noise5         30    0  0.0% [ 0.0-11.4%]  {'presence': 30}
+  swap_bound                  34    0  0.0% [ 0.0-10.2%]  {'blink': 3, 'match': 31}
+  swap_unbound                34   12 35.3% [21.5-52.1%]  {'blink': 2, 'match': 20}
+
+Saved C:\Users\pasup\Downloads\BioLock\BioLock\results\simulation_test.json  (1192s)

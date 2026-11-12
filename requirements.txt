@@ -1,6 +1,5 @@
 opencv-contrib-python==4.10.0.84
-numpy
-Pillow
-cryptography
-psutil
-pywin32; sys_platform == "win32"
+numpy>=1.26
+Pillow>=10.0
+cryptography>=42.0
+psutil>=5.9

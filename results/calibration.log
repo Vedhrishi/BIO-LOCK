@@ -1,0 +1,26 @@
+olivetti: 200 photographs staged (1s)
+lfw: 1857 photographs staged (3s)
+
+Presence measure (block-averaged frame difference in the face box, mean of 20 frames)  pct[1,5,50,95,99]
+  static_n2      n= 234  [0.0008, 0.00089, 0.00175, 0.00327, 0.00413]
+  static_n5      n= 234  [0.00173, 0.00188, 0.00377, 0.0066, 0.00859]
+  static_n8      n= 234  [0.00266, 0.00304, 0.00549, 0.00973, 0.01186]
+  still_person   n= 233  [0.00182, 0.00214, 0.00338, 0.00523, 0.00604]
+  sway_5         n= 234  [0.00507, 0.00586, 0.00873, 0.01366, 0.01541]
+  sway_10        n= 234  [0.0099, 0.01113, 0.01662, 0.02597, 0.03002]
+  sway_20        n= 234  [0.01888, 0.02134, 0.03189, 0.04981, 0.0585]
+  shaken         n= 233  [0.0153, 0.01697, 0.02773, 0.04513, 0.05343]
+  rule: sqrt(P99 static, noise 5  x  P1 sway 10 px) = sqrt(0.0086 x 0.0099) = 0.0092 -> motion_thresh 0.009
+
+Blink evidence when the eye detector loses the eyes: change in the eye band, change in the rest of the face, ratio   pct[1,5,50,95,99]
+  simulated blink              events=  382  eye [0.00099, 0.00199, 0.06107, 0.20478, 0.28287]  rest [0.00097, 0.00122, 0.00322, 0.00815, 0.00963]  ratio [0.7, 1.08, 19.33, 34.51, 39.46]
+  shaken photograph            events=  386  eye [0.0075, 0.01112, 0.03937, 0.11008, 0.12461]  rest [0.00487, 0.00895, 0.03282, 0.08401, 0.10701]  ratio [0.83, 0.9, 1.26, 1.95, 2.16]
+  static photograph, noise 5   events=  186  eye [0.00245, 0.00245, 0.00471, 0.01062, 0.01062]  rest [0.00282, 0.00282, 0.00471, 0.00882, 0.00882]  ratio [0.45, 0.45, 1.05, 1.38, 1.38]
+  rule: blink_local_ratio = P99 ratio of shaken-photo drop-outs, rounded up to 0.5: 2.16 -> 2.5
+  rule: blink_min_change  = P99 eye-band change of noise drop-outs, rounded up to 0.001: 0.0106 -> 0.011
+  blink              passes the shipped rule (ratio >= 2.5 and eye change >= 0.011): 0.916 (350 of 382)
+  shaken_dropouts    passes the shipped rule (ratio >= 2.5 and eye change >= 0.011): 0.003 (1 of 386)
+  noise_dropouts     passes the shipped rule (ratio >= 2.5 and eye change >= 0.011): 0.000 (0 of 186)
+  rules give {'motion_thresh': 0.009, 'blink_local_ratio': 2.5, 'blink_min_change': 0.011}; shipped {'motion_thresh': 0.009, 'blink_local_ratio': 2.5, 'blink_min_change': 0.011}; match: True
+
+Saved C:\Users\pasup\Downloads\BioLock\BioLock\results\liveness_calibration_dev.json  (413s)

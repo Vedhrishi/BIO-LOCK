@@ -1,121 +1,45 @@
-# Running the parameter sweeps and getting metrics for the paper
+# Experiment scripts
 
-This describes what changed to support the experiments your mentors
-asked for, and exactly how to produce real numbers with it.
-
-**Important:** nothing here can compute FAR/FRR/accuracy/etc. without
-real captured data — real face images, a real printed photo, a real
-phone display, and a real recorded replay video. The code below does
-the measuring and the arithmetic; you still have to go collect the
-samples described in `experiments/run_experiments.py`'s docstring. Any
-numbers you see in example output anywhere in this repo (e.g. in this
-file) are from a synthetic dry-run used only to prove the code runs
-end-to-end — they are not real biometric results and must not be used
-in the paper.
-
-## What changed in the code
-
-- **`config.py`** — every tunable parameter (`min_conf`, `motion_thresh`,
-  `enrol_frames`, the three fusion weights, etc.) now lives here instead
-  of as a hard-coded constant, loaded from `config.json` / environment
-  variables / explicit overrides. `main.py` reads these at startup.
-- **`FaceEngine.predict()`** in `main.py` — now a weighted fusion of
-  three independent match signals instead of LBPH alone:
-  - **LBPH** distance -> confidence (as before)
-  - **Histogram** correlation of the face ROI against the mean
-    histogram of the enrolled samples
-  - **Template** match (normalized cross-correlation) against the
-    enrolled mean-face image
-
-  `fused_confidence = w_lbph*LBPH + w_hist*Hist + w_template*Template`,
-  with `w_lbph + w_hist + w_template == 1` (enforced by
-  `config.validate()`). This is the only change to the matching logic;
-  the 4-step liveness pipeline around it is untouched.
-- **`metrics.py`** — new module, logs:
-  - every processed frame's face count (0 / 1 / 2+) to `logs/detections.csv`
-  - every completed authentication attempt (accept/reject, the three
-    individual sub-scores, latency, CPU%, memory, and whatever
-    `min_conf`/`motion_thresh`/`enrol_frames`/weights were active) to
-    `logs/attempts.csv`
-  - `compute_metrics()` turns a set of logged attempts into FAR, FRR,
-    accuracy, precision, recall, F1
-- **Testing Mode panel** (in the app's sidebar) — three dropdowns:
-  `Trial label` (genuine / impostor / attack_photo / attack_phone /
-  attack_replay), `Lighting condition`, `Movement condition`. Set these
-  before each attempt so the log row records what you actually tested.
-  **These tags are for logging only** — they never affect the
-  accept/reject decision itself.
-
-## Two ways to run the experiments
-
-### A. Offline batch sweep (`experiments/run_experiments.py`)
-
-Fastest way to get the full parameter-range tables (min_conf 20-60,
-motion_thresh 0.01-0.10, enrol_frames 10/20/40/60/80/100, and the full
-LBPH/Hist/Template weight-combination grid) from a folder of captured
-images, without re-running the camera for every combination (match
-scores are computed once per image, then re-thresholded/re-weighted in
-memory for every combination — this is why its latency column is
-labelled "scoring latency", not end-to-end camera latency).
+Everything that produces a number lives in `experiments/` and is driven by one command:
 
 ```bash
-python experiments/run_experiments.py --dataset /path/to/your/dataset --out experiments/results
+pip install -r requirements.txt -r requirements-dev.txt
+python evaluate.py
 ```
 
-Read the big docstring at the top of that file for the exact dataset
-folder layout and what to physically go capture (live photos per
-lighting condition, a printed photo, a phone-displayed photo, frames
-extracted from a replay video).
+That runs the steps below in order and writes `docs/RESULTS.md` from their JSON output (`results/`). It stops
+before the test halves if the shipped configuration differs from what the selection rules give on the development
+halves. `python evaluate.py --quick` runs a small subset of every step to check that the machinery works.
 
-Outputs (all in `experiments/results/`):
-- `min_conf_sweep.csv` — FAR/FRR/accuracy/.../latency/CPU/memory at each min_conf 20-60
-- `motion_thresh_sweep.csv` — whether each motion_thresh 0.01-0.10 would block the
-  phone/replay attack sequences you captured (needs sequential frames, see docstring)
-- `enrol_frames_sweep.csv` — same metrics at each of 10/20/40/60/80/100 enrolment frames
-- `weight_combo_sweep.csv` — same metrics across the LBPH/Hist/Template weight grid
-- `detection_counts.csv` — 0/1/multi-face tally per folder (the "0/1/multiple-face
-  detection" logging your mentors asked for)
-- `condition_breakdown.csv` — FAR/FRR/etc. per lighting × movement folder
-- `attack_breakdown.csv` — accept rate per presentation-attack type
+| Script | What it does | Output |
+|---|---|---|
+| `experiments/benchmark.py --split dev` | Matcher on the development halves of LFW and Olivetti through the app's own code; applies the selection rules for calibration, weights and threshold | `results/benchmark_dev.json` |
+| `experiments/simulate.py --calibrate` | Simulation: the presence and blink measures on animated development photographs; selection rules for the three liveness thresholds | `results/liveness_calibration_dev.json` |
+| `experiments/benchmark.py --split test` | Matcher on the test halves with the shipped configuration | `results/benchmark_test.json` |
+| `experiments/simulate.py` | Simulation: complete sessions on the test halves (genuine, impostor, motionless and trembling photograph, liveness by one face and match by another) | `results/simulation_test.json` |
+| `experiments/perf.py` | Time per step and per frame, memory, start-up, on the machine it runs on | `results/perf.json` |
+| `experiments/summarize_live_logs.py` | Summary of the live trials logged by the app (`logs/attempts.csv`) | printed tables |
 
-### B. Live app sessions (`experiments/summarize_live_logs.py`)
+Shared code: `experiments/datasets.py` (loading the two datasets, the dev/test split, turning a photograph into
+a camera frame, the trial protocol) and `biolock/sim.py` (animated photographs).
 
-Use this if your mentors want numbers from the real, full liveness
-pipeline (blink + head-turn included), not just static-image face
-matching. Run `main.py`, set the Testing Mode panel before each
-attempt, physically perform it (stand in front of the camera / hold up
-the photo / hold up the phone / play the replay video), then run:
+## Rules the scripts follow
 
-```bash
-python experiments/summarize_live_logs.py
-```
+1. Parameters are chosen on the development halves only. The selection rules are written at the top of
+   `benchmark.py` and `simulate.py`.
+2. The test halves are used to report, not to choose.
+3. All random choices are seeded, so a second run gives the same numbers on the same library versions (recorded
+   in every JSON file).
+4. A simulation is called a simulation wherever its numbers appear.
 
-which prints the same metric tables computed from `logs/attempts.csv`
-and `logs/detections.csv` — i.e., from attempts you actually performed.
+## Changing a parameter
 
-## Recommended split of effort
+Edit `biolock/config.py`, run `python evaluate.py`, and report the new `docs/RESULTS.md` as a whole. From source a
+parameter can also be overridden for one run with an environment variable (`BIOLOCK_MIN_CONF=40 python main.py`) or
+a `config.json` next to `main.py`; the packaged exe ignores both for everything that decides an unlock.
 
-- Use **A** for the big min_conf / motion_thresh / enrol_frames /
-  weight-combination sweeps — doing those live, one physical attempt
-  per parameter value, would take enormous time for little extra
-  validity once you have a decent still-image dataset per condition.
-- Use **B** to report a smaller number of full-pipeline, end-to-end
-  numbers (overall accuracy, overall latency including all 4 steps,
-  live presentation-attack rejection rate) that reflect the complete
-  system rather than just the face-match stage — this is usually what
-  a project report wants headline numbers for.
+## Where the matcher design came from
 
-## Latency / CPU / memory caveats, in the interest of not overstating them
-
-- **Offline (A)**: "latency" is per-image match scoring only (LBPH +
-  histogram + template, no camera I/O, no liveness steps). Useful for
-  comparing weight combinations' relative cost, not representative of
-  real unlock time.
-- **Live (B)**: latency is the full `_start()` → accept/reject wall-clock
-  time, which includes however long you personally took to blink and
-  turn your head — report it as "end-to-end interaction time," not pure
-  algorithm latency, if asked to characterise it precisely.
-- CPU%/memory figures reflect the whole Python process at that instant,
-  not an isolated measurement of just the face-matching code — normal
-  for this kind of lightweight instrumentation, but worth stating as a
-  limitation if your mentors probe on methodology.
+`research/` holds the earlier parameter search (crop and alignment, normalisation, LBPH radius and grid, other
+scores, fusion, gallery size), all on the development halves. `research/README.md` lists the scripts in order;
+`research/exp8_engine.py` checks that `biolock/engine.py` reproduces that pipeline exactly.

@@ -1,0 +1,38 @@
+Machine: 13th Gen Intel(R) Core(TM) i7-13700H - 20 logical CPUs, 15.6 GB RAM
+
+Step                                               median ms    p95 ms
+  prepare frame (mirror, grey, equalise)               0.50      0.59
+  face detection (half resolution)                     6.97      7.33
+  eye check for blinks (reduced band)                  2.43      3.21
+  eye positions for alignment                         10.97     12.00
+  aligned crop + Tan-Triggs                            0.32      0.73
+  features of one crop (LBP histogram, HOG)            0.52      0.54
+  comparison with 90 enrolled samples                  1.06      1.20
+  whole match of one frame (eyes, crop, score)        14.72     16.99
+  presence measure                                     0.12      0.12
+  blink evidence measure                               0.06      0.07
+
+Simulated enrol session: enrolled, 494 frames
+  presence      11 frames   median   9.02 ms   p95  10.87 ms   -> 160.3 frames/s
+  blink         40 frames   median   7.85 ms   p95  15.39 ms   -> 109.2 frames/s
+  head          46 frames   median   5.37 ms   p95  11.74 ms   -> 168.7 frames/s
+  face         397 frames   median  10.48 ms   p95  24.27 ms   ->  74.2 frames/s
+
+Simulated verify session: accept, 112 frames
+  presence      11 frames   median   8.53 ms   p95  10.82 ms   -> 170.2 frames/s
+  blink         40 frames   median  12.90 ms   p95  21.49 ms   ->  79.8 frames/s
+  head          46 frames   median   5.03 ms   p95  11.49 ms   -> 179.5 frames/s
+  face          15 frames   median  26.39 ms   p95  29.10 ms   ->  38.3 frames/s
+
+Memory (MB): {'after imports': 44.6, 'engine with an enrolled template': 82.4, 'after two full sessions': 97.4}
+Start-up:
+  import all modules, fresh process (ms)       221
+  create engine, load cascades (ms)            19.7
+  template file (KB)                           368.3
+  create engine and load template (ms)         70.2
+  derive and store key, PBKDF2 600k (ms)       93
+  check key at unlock (ms)                     109
+  self-test from source (s)                    1.87
+  self-test of the packaged exe (s)            5.61
+
+Saved C:\Users\pasup\Downloads\BioLock\BioLock\results\perf.json

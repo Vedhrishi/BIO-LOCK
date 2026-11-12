@@ -1,0 +1,51 @@
+olivetti: 200 photographs in the test half, faces found in 90.5 %, both eyes in 87.8 % of those (3s)
+lfw: 1166 photographs in the test half, faces found in 98.1 %, both eyes in 70.5 % of those (14s)
+  scored olivetti seed 0: 18 enrolments (135s)
+  scored olivetti seed 1: 18 enrolments (135s)
+  scored olivetti seed 2: 18 enrolments (137s)
+  scored olivetti seed 3: 18 enrolments (139s)
+  scored olivetti seed 4: 18 enrolments (139s)
+  scored olivetti seed 5: 18 enrolments (139s)
+  scored lfw seed 0: 31 enrolments (234s)
+  scored lfw seed 1: 31 enrolments (237s)
+  scored lfw seed 2: 31 enrolments (311s)
+
+=== Olivetti / ORL (controlled): 18 enrolled identities, 108 enrolments over the seeds ===
+  gallery   decision  genuine impost.    EER    AUC TAR@1%FAR   FAR at T=35 [95% CI]        FRR at T [95% CI]
+  photos    single        510   12960   3.0%  0.994     95.1%    0.79% [ 0.18- 1.62]           5.5% [  1.8-  9.9]
+  photos    median3      1080    1944   1.2%  1.000     99.0%    0.36% [ 0.05- 0.72]           1.5% [  0.0-  3.4]
+  photos    median5       840    1944   0.1%  1.000    100.0%    0.31% [ 0.00- 0.62]           0.0% [  0.0-  0.0]
+  live      single        510   12960   2.5%  0.996     96.5%    1.47% [ 0.47- 2.76]           3.3% [  1.2-  6.5]
+  live      median3      1080    1944   0.8%  1.000     99.4%    1.23% [ 0.31- 2.42]           0.8% [  0.0-  2.3]
+  live      median5       840    1944   0.0%  1.000    100.0%    1.08% [ 0.15- 2.31]           0.0% [  0.0-  0.0]
+  fusion weightings (single photograph, "photos" gallery):
+    shipped (1, 0, 0)                  EER   3.0%  AUC 0.994  TAR@1%FAR  95.1%   at T: FAR  0.79%  FRR   5.5%
+    development grid, rank 2 (0.95, 0, 0.05) EER   3.0%  AUC 0.993  TAR@1%FAR  94.9%   at T: FAR  0.83%  FRR   6.7%
+    development grid, rank 3 (0.95, 0.05, 0) EER   3.1%  AUC 0.993  TAR@1%FAR  95.1%   at T: FAR  1.20%  FRR   4.3%
+    manuscript (0.45, 0.2, 0.35)       EER   6.7%  AUC 0.982  TAR@1%FAR  83.9%   at T: FAR 13.86%  FRR   4.3%
+    version 9 (0.5, 0.3, 0.2)          EER   5.3%  AUC 0.987  TAR@1%FAR  86.9%   at T: FAR 18.78%  FRR   2.4%
+    component alone: LBPH distance                EER   3.0%  AUC 0.994
+    component alone: histogram (HOG) correlation  EER  10.3%  AUC 0.961
+    component alone: template correlation         EER  20.2%  AUC 0.875
+  version-9 preprocessing + LBPH r=1, 8x8:  single EER   6.7% TAR@1%FAR  85.7%   median of 5: EER   0.6% TAR@1%FAR  96.4%
+
+=== LFW (unconstrained): 31 enrolled identities, 93 enrolments over the seeds ===
+  gallery   decision  genuine impost.    EER    AUC TAR@1%FAR   FAR at T=35 [95% CI]        FRR at T [95% CI]
+  photos    single       1926   13950  19.9%  0.871     51.2%    0.22% [ 0.08- 0.39]          59.3% [ 54.0- 65.2]
+  photos    median3       930    2790  12.4%  0.947     65.2%    0.04% [ 0.00- 0.11]          61.2% [ 52.2- 70.5]
+  photos    median5       930    2790   9.5%  0.970     75.9%    0.00% [ 0.00- 0.00]          64.0% [ 54.7- 73.8]
+  live      single       1926   13950  18.4%  0.882     55.6%    0.47% [ 0.28- 0.69]          50.1% [ 44.9- 55.8]
+  live      median3       930    2790  10.4%  0.959     69.0%    0.07% [ 0.00- 0.18]          51.5% [ 42.8- 60.6]
+  live      median5       930    2790   6.8%  0.979     81.7%    0.04% [ 0.00- 0.11]          50.2% [ 39.9- 60.8]
+  fusion weightings (single photograph, "photos" gallery):
+    shipped (1, 0, 0)                  EER  19.9%  AUC 0.871  TAR@1%FAR  51.2%   at T: FAR  0.22%  FRR  59.3%
+    development grid, rank 2 (0.95, 0, 0.05) EER  19.9%  AUC 0.871  TAR@1%FAR  52.2%   at T: FAR  0.29%  FRR  58.8%
+    development grid, rank 3 (0.95, 0.05, 0) EER  19.9%  AUC 0.869  TAR@1%FAR  51.9%   at T: FAR  0.50%  FRR  53.8%
+    manuscript (0.45, 0.2, 0.35)       EER  24.3%  AUC 0.826  TAR@1%FAR  37.9%   at T: FAR 13.99%  FRR  32.9%
+    version 9 (0.5, 0.3, 0.2)          EER  22.8%  AUC 0.839  TAR@1%FAR  42.4%   at T: FAR 23.26%  FRR  23.1%
+    component alone: LBPH distance                EER  19.9%  AUC 0.871
+    component alone: histogram (HOG) correlation  EER  29.8%  AUC 0.773
+    component alone: template correlation         EER  35.0%  AUC 0.713
+  version-9 preprocessing + LBPH r=1, 8x8:  single EER  25.3% TAR@1%FAR  26.0%   median of 5: EER  15.1% TAR@1%FAR  48.8%
+
+Saved C:\Users\pasup\Downloads\BioLock\BioLock\results\benchmark_test.json  (312s)

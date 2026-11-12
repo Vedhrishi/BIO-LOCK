@@ -1,0 +1,150 @@
+{
+ "version": "10.0",
+ "machine": {
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "python": "3.12.4",
+  "opencv": "4.10.0",
+  "numpy": "2.5.4",
+  "logical_cpus": 20,
+  "opencv_threads": 20,
+  "ram_gb": 15.6,
+  "cpu_mhz": 2400,
+  "cpu": "13th Gen Intel(R) Core(TM) i7-13700H"
+ },
+ "steps": {
+  "prepare frame (mirror, grey, equalise)": {
+   "median_ms": 0.499,
+   "p95_ms": 0.589,
+   "runs": 1196
+  },
+  "face detection (half resolution)": {
+   "median_ms": 6.975,
+   "p95_ms": 7.332,
+   "runs": 86
+  },
+  "eye check for blinks (reduced band)": {
+   "median_ms": 2.434,
+   "p95_ms": 3.205,
+   "runs": 240
+  },
+  "eye positions for alignment": {
+   "median_ms": 10.969,
+   "p95_ms": 12.001,
+   "runs": 56
+  },
+  "aligned crop + Tan-Triggs": {
+   "median_ms": 0.324,
+   "p95_ms": 0.731,
+   "runs": 1628
+  },
+  "features of one crop (LBP histogram, HOG)": {
+   "median_ms": 0.516,
+   "p95_ms": 0.537,
+   "runs": 1158
+  },
+  "comparison with 90 enrolled samples": {
+   "median_ms": 1.056,
+   "p95_ms": 1.195,
+   "runs": 569
+  },
+  "whole match of one frame (eyes, crop, score)": {
+   "median_ms": 14.723,
+   "p95_ms": 16.99,
+   "runs": 41
+  },
+  "presence measure": {
+   "median_ms": 0.115,
+   "p95_ms": 0.121,
+   "runs": 2000
+  },
+  "blink evidence measure": {
+   "median_ms": 0.06,
+   "p95_ms": 0.065,
+   "runs": 2000
+  }
+ },
+ "gallery_samples": 100,
+ "memory_mb": {
+  "after imports": 44.6,
+  "engine with an enrolled template": 82.4,
+  "after two full sessions": 97.4
+ },
+ "sessions": {
+  "build template from samples (ms)": 76.6,
+  "enrol": {
+   "outcome": "enrolled",
+   "frames": 494,
+   "simulated_seconds": 16.5,
+   "stages": {
+    "presence": {
+     "frames": 11,
+     "median_ms": 9.02,
+     "p95_ms": 10.87,
+     "frames_per_second": 160.3
+    },
+    "blink": {
+     "frames": 40,
+     "median_ms": 7.85,
+     "p95_ms": 15.39,
+     "frames_per_second": 109.2
+    },
+    "head": {
+     "frames": 46,
+     "median_ms": 5.37,
+     "p95_ms": 11.74,
+     "frames_per_second": 168.7
+    },
+    "face": {
+     "frames": 397,
+     "median_ms": 10.48,
+     "p95_ms": 24.27,
+     "frames_per_second": 74.2
+    }
+   },
+   "all_stages_median_ms": 10.36
+  },
+  "verify": {
+   "outcome": "accept",
+   "frames": 112,
+   "simulated_seconds": 3.7,
+   "stages": {
+    "presence": {
+     "frames": 11,
+     "median_ms": 8.53,
+     "p95_ms": 10.82,
+     "frames_per_second": 170.2
+    },
+    "blink": {
+     "frames": 40,
+     "median_ms": 12.9,
+     "p95_ms": 21.49,
+     "frames_per_second": 79.8
+    },
+    "head": {
+     "frames": 46,
+     "median_ms": 5.03,
+     "p95_ms": 11.49,
+     "frames_per_second": 179.5
+    },
+    "face": {
+     "frames": 15,
+     "median_ms": 26.39,
+     "p95_ms": 29.1,
+     "frames_per_second": 38.3
+    }
+   },
+   "all_stages_median_ms": 9.99
+  }
+ },
+ "startup": {
+  "import all modules, fresh process (ms)": 221,
+  "create engine, load cascades (ms)": 19.7,
+  "template file (KB)": 368.3,
+  "create engine and load template (ms)": 70.2,
+  "derive and store key, PBKDF2 600k (ms)": 93,
+  "check key at unlock (ms)": 109,
+  "self-test from source (s)": 1.87,
+  "self-test of the packaged exe (s)": 5.61
+ }
+}

@@ -1,0 +1,13 @@
+[14:19:08] tests: -m unittest discover -s tests -t .
+           finished in 59 s, exit code 0, log results\tests.log
+[14:20:07] benchmark_dev: experiments\benchmark.py --split dev --out results
+           finished in 356 s, exit code 0, log results\benchmark_dev.log
+[14:26:03] calibration: experiments\simulate.py --calibrate --out results
+           finished in 414 s, exit code 0, log results\calibration.log
+[14:32:57] benchmark_test: experiments\benchmark.py --split test --out results
+           finished in 312 s, exit code 0, log results\benchmark_test.log
+[14:38:09] simulation_test: experiments\simulate.py --split test --out results
+           finished in 1192 s, exit code 0, log results\simulation_test.log
+[14:58:01] perf: experiments\perf.py --out results --exe dist\BioLock.exe
+           finished in 33 s, exit code 0, log results\perf.log
+Wrote docs\RESULTS.md  (2366 s)

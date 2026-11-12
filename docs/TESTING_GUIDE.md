@@ -1,45 +1,96 @@
-# BioLock - validation protocol (answers the reviewer points)
+# Live trials
 
-## 1. What the displayed "match score" is
-The number shown in the app ("Match score 43/100") is a **weighted similarity score on a 0-100 scale, not a probability**.
-It is computed in `FaceEngine.predict()`:
+The scripts in `experiments/` measure the matcher on public photographs and run simulated sessions. They cannot
+measure how the system behaves with real people, a real webcam and real attack material. That needs the trials
+described here. Until they are done, no liveness or presentation-attack rate can be claimed.
 
-    score = 0.5 * LBPH + 0.3 * Histogram + 0.2 * Template      (weights in config.py, must sum to 1)
+## 1. What the app shows and logs
 
-| Component | Raw measure | Mapped to 0-100 |
+**Match score.** For every frame in the last step the app computes the chi-square distance between the face's
+LBP histogram and the nearest enrolled sample, and maps it to 0-100 (distance 76.4 -> 0, distance 31.2 -> 100).
+The decision uses the **median of 15 frames**; it must reach **35**. The median score of the frames seen during
+the blink step must reach 35 as well, so that the liveness steps and the match belong to the same face. The
+score is a similarity, not a probability.
+
+**Log.** Each attempt adds one row to `logs/attempts.csv` next to the app:
+
+| Column | Meaning |
+|---|---|
+| `trial_label`, `lighting_condition`, `movement_condition` | what you set in Testing mode |
+| `outcome` | `accept`, `reject`, `timeout`, `cancelled` |
+| `failed_stage` | `presence`, `blink`, `head`, `match`, `key`, or empty when accepted |
+| `score`, `live_score` | median match score of the 15 match frames / of the blink-step frames |
+| `lbph`, `hist`, `template`, `lbph_distance` | medians of the three component scores and of the raw distance |
+| `presence_pass`, `blink_pass`, `head_pass`, `liveness_pass` | which liveness steps were completed |
+| `motion_avg`, `blinks` | the presence measure and the number of blinks counted |
+| `blink_frames`, `eyes_seen_frames` | frames of the blink step, and in how many the eye check saw open eyes |
+| `dropouts_moved`, `dropouts_not_local`, `dropouts_length` | times the eyes disappeared but no blink was counted: the head moved, the picture changed everywhere (or not at all), the gap was too short or too long |
+| `faces_0`, `faces_1`, `faces_multi` | detection passes with no / one / several faces |
+| `latency_ms`, `proc_ms`, `fps`, `cpu_percent`, `mem_mb` | time to decision, processing per frame, cost |
+| `counted` | 1 if the attempt counted towards the lock-out |
+
+Nothing is logged per frame, and no image is stored.
+
+## 2. Before you start
+
+1. Copy the app to an external drive and run it there. Pick the camera that shows your face in colour (a laptop's
+   infrared camera is listed as "greyscale / infrared": do not use it).
+2. Enrol in the light you normally work in. Follow the prompts until 100 samples are captured.
+3. Unlock once. Tick **Testing mode**, then **Do not count failed matches**. That switch can only be turned on
+   while the vault is unlocked; without it five rejected trials erase the enrolment. Lock the vault again.
+4. Write down the camera, the room, the lighting and who took part.
+
+## 3. First check: do the liveness steps work for the enrolled person?
+
+Three thresholds were set from simulated sessions only (`motion_thresh`, `blink_local_ratio`,
+`blink_min_change`, see `docs/RESULTS.md` section 3). Check them before collecting numbers:
+
+- **Presence.** Watch "Motion" under *Live signals*. Sitting still it should stay below the threshold shown next
+  to it; moving your head gently from side to side should take it above within a second or two.
+- **Blink.** Hold still and blink slowly. Each counted blink gives a short beep and raises the counter.
+- **Head.** Move left until the prompt changes, then right.
+
+Do ten genuine attempts. If a step regularly fails for a live person, note what you saw and report it rather
+than changing a threshold by feel. The log helps: `motion_avg` for presence; for blinks, `eyes_seen_frames`
+close to `blink_frames` with no drop-outs means the eye check never lost the eyes, a low `eyes_seen_frames` means
+it does not see them reliably, and the three `dropouts_*` columns say why eyes that disappeared and came back
+were not counted as a blink.
+
+Thresholds are changed in `biolock/config.py`, from source, and every change has to be stated together with the
+trials that justify it.
+
+## 4. Trials
+
+Set **Trial label**, lighting and movement before each attempt, then press *Unlock with face ID*.
+
+| Trial label | What is presented | Suggested number |
 |---|---|---|
-| LBPH | LBPH distance to the enrolled model | `100 - distance`, clipped |
-| Histogram | correlation of the face's grey histogram with the mean enrolled histogram | `(corr + 1) / 2 * 100` |
-| Template | normalised cross-correlation with the mean enrolled face | `(ncc + 1) / 2 * 100` |
+| `genuine` | the enrolled person, live | 30 or more, on more than one day |
+| `impostor` | other people, live (at least 3 people) | 30 or more |
+| `attack_photo` | a printed photograph of the enrolled person: held still, moved by hand, with the eyes covered and uncovered | 30 or more |
+| `attack_phone` | the photograph on a phone or tablet screen, same variations | 30 or more |
+| `attack_replay` | a video of the enrolled person blinking and moving, played on a screen | 30 or more |
 
-It is uncalibrated: it has not been validated as a probability, so do not report it as one. A face is accepted when the
-score is >= `min_conf` (default 40). Report only FAR/FRR measured at that threshold.
+Notes:
+- After an accepted genuine trial the vault is open: lock it before the next trial.
+- A trial that ends in a time-out is a rejection. It is logged with the step it stopped at.
+- The replay attack matters most. The blink, motion and head cues do not tell a replayed video from a person;
+  expect it to pass the liveness steps if the video shows them, and report what you measure.
+- Repeat the genuine and impostor trials in a second lighting condition if you can.
 
-## 2. Liveness is tested separately from face matching
-Every verification trial logs, in `logs/attempts.csv`: `presence_pass`, `blink_pass`, `head_pass`, `liveness_pass`,
-and `failed_stage` (`presence` / `blink` / `head` / `match` / empty when accepted).
-A trial that does not finish the three liveness steps within 45 s is logged as a rejection at the stage it stopped at
-(it does not count toward the lockout). Run `python experiments/summarize_live_logs.py` to get the per-attack table
-"Liveness per trial label".
+## 5. Summary
 
-## 3. Procedure for the trials (do this on the real app)
-1. Enrol (good light, 100 samples).
-2. In **Testing mode**, tick *Disable lockout/wipe while testing* (otherwise 5 rejections wipe your enrolment).
-3. For each condition set **Trial label** + lighting + movement, then press unlock and perform the trial:
+```bash
+python experiments/summarize_live_logs.py
+```
 
-| Trial label | What you present | Target N |
-|---|---|---|
-| genuine | your live face | 30 |
-| impostor | a different live person (3+ people) | 30 |
-| attack_photo | printed photo of the enrolled face | 30 |
-| attack_phone | photo on a phone screen | 30 |
-| attack_replay | video of the enrolled face played on a screen | 30 |
+It prints FAR and FRR with 95 % intervals, where each kind of trial stopped, the rates per lighting and movement
+tag, what other thresholds would have given (from the logged scores), and the cost per attempt.
 
-The panel shows "Trials logged: N (genuine n, ...)" so you can confirm each trial was recorded.
-4. Run `python experiments/summarize_live_logs.py` and report FAR, FRR, accuracy, per-attack accept rate, liveness pass
-rate, and the N and conditions for each row. Untick the testing checkbox afterwards.
+## 6. Reporting
 
-## 4. Reporting rules
-- Report numbers only from `logs/attempts.csv`; state N per cell and the lighting/movement tags.
-- With N=30 per cell the 95 % interval is wide (e.g. 0/30 false accepts still allows a true rate of ~10 %); say so.
-- The "Failed unlock attempts: x/5" counter is the lockout counter, not the trial counter.
+- Report only what is in `logs/attempts.csv`, with the number of trials for every rate and the conditions.
+- Give the interval, not just the rate. With 30 trials, 0 false accepts still allows a true rate of about 11 %.
+- Say which app version and configuration produced the log (`app_version`, `min_conf` columns).
+- "Failed face matches: x of 5" in the app is the lock-out counter, not the number of trials.
+- Untick the testing switches when you have finished.

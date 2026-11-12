@@ -1,34 +1,65 @@
-# Paper vs. code: what matches, what does not
+# Manuscript versus code
 
-Checked against `ICSCNA_298.docx` ("BioLock SSD: A Multi-Stage Biometric Authentication Framework for Secure Removable Storage").
-Every item below must be true of the shipped code *and* of the paper before resubmission.
+For `ICSCNA_298.docx`, "BioLock SSD: A Multi-Stage Biometric Authentication Framework for Secure Removable
+Storage". The manuscript is not kept in this repository. The "Manuscript" column below comes from the check that
+was made against it for version 9; read each line against the current text before editing. Every item has to be
+true of both the shipped code and the paper before resubmission.
 
-## Mismatches found (and status)
+## 1. Where version 10 differs from what the manuscript describes
 
-| # | Paper says | Code did / does | Status |
+| # | Manuscript | Version 10 | What to do in the paper |
 |---|---|---|---|
-| 1 | Fusion weights C = 0.45·LBPH + 0.20·Hist + 0.35·Temp (Eq. 6, Table II, Section VII-A) | Shipped default is 0.5 / 0.3 / 0.2 (`config.py`) | **Open, your decision.** Either edit the paper to 0.5/0.3/0.2, or set `config.py` to the paper's values. Measured effect is in `RESULTS_LFW.md`: at threshold 40 the paper weights give FAR about 38 % / FRR about 26 %, the shipped weights FAR about 9.5 % / FRR about 52 %. Neither is better in equal-error terms. |
-| 2 | Head-movement baseline set over 10 calibration observations | Baseline was the first single observation | **Fixed in code**: baseline = mean of first 10 observations (`HeadTurn.CALIB_OBS`), covered by tests. |
-| 3 | Abstract: "controlled experimental measurements are not available". Section VI/VII and Table IV read as if an evaluation was run ("All numerical results are reported from measured experimental trials", "was evaluated") but contain no numbers. | No live trials exist in `logs/attempts.csv` | **Fix in paper**: state plainly that Section VI is a protocol and Section VII reports implementation behaviour, plus the measured LFW matcher benchmark (below). Remove "evaluated"/"results are reported from measured trials" wording unless numbers are added. |
-| 4 | "Weights reduce dependence on a single recognition output" (Section IV-B, VII-A, Discussion) | LFW benchmark: fusion does not beat LBPH alone (AUC 0.81 vs 0.75-0.76 fused) | **Fix in paper**: present fusion as a design choice whose benefit was not demonstrated, and cite the measured result. |
-| 5 | Section V describes the pipeline only | The code now also has: threaded camera pipeline, enrolment quality gate and outlier pruning, 45 s liveness timeout, per-step logging, external-drive-only guard | **Update paper** if these are part of the submitted system (they change what is "implemented"). |
-| 6 | Drive identification described as detecting removable drives | Code now refuses to run on internal drives (USB/SD/removable only) | Add one sentence. |
+| 1 | Fused score C = 0.45 LBPH + 0.20 Hist + 0.35 Temp (Eq. 6, Table II) | The three scores are still computed, but the shipped weights are (1, 0, 0): LBPH alone. On the development data no weighting beat it, and the manuscript's weights were clearly worse (`RESULTS.md` sections 3 and 4) | Report the fusion as tested and not beneficial, or drop it. Do not claim that fusion "reduces dependence on a single recognition output" |
+| 2 | LBPH radius 1, 8 neighbours, 8x8 grid | Radius 5, 8 neighbours, 6x6 grid | Update the parameters |
+| 3 | Face crop from the detector box, histogram equalisation | Crop aligned on the eye positions (box geometry when the eyes are not found), Tan-Triggs illumination normalisation, 100x100 pixels | Describe the new preprocessing |
+| 4 | "Histogram" score: correlation of grey-level histograms | Correlation of gradient-orientation (HOG) descriptors with the mean enrolled descriptor. The grey-level version was at chance | Correct the definition (it has weight 0 either way) |
+| 5 | Threshold 40 on the fused score | Threshold 35 on a recalibrated 0-100 score (LBPH distance 60.6). Scores of versions 9 and 10 are not comparable | Update, and say how it was chosen (1 % single-photograph impostor rate on development data) |
+| 6 | A frame at or above the threshold unlocks | The median of 15 frames must reach the threshold | Update the decision rule R |
+| 7 | (not in the manuscript) | The frames seen during the blink step must match as well, so liveness and identity belong to one face | Add |
+| 8 | Motion: mean absolute frame difference, threshold 0.03 over 20 observations | Same idea, measured inside one face box on 8x8 block-averaged pixels; threshold 0.009, window of 20, at least 10 observations. The old measure reacted to camera noise as much as to movement | Update the definition and the value, and say the value comes from simulation |
+| 9 | Blink: eyes not detected for at least 2 frames, twice | Additionally the head must stay in place and the picture must change mainly in the eye band (ratio 2.5, minimum change 0.011) | Add the two conditions |
+| 10 | Vault key derived from the enrolled face data | Derived from a digest of the whole template, a drive identifier and the volume serial number (PBKDF2-HMAC-SHA256, 600,000 iterations, Fernet: unchanged) | Update the description of stage K. Do not call the vault encrypted: the folder is hidden, the key file only detects tampering and copying |
+| 11 | 5 failed attempts, then wipe | 5 failed face matches, then wipe. Liveness time-outs are not counted; repeated ones cause a waiting period | Make the wording precise |
+| 12 | Detects removable drives | Refuses to run from internal drives | One sentence |
+| 13 | Sections VI-VII read as if an evaluation had been run, without numbers | Measured matcher results on two public datasets, simulated sessions, timings (`RESULTS.md`). No live trials yet | See section 3 below |
 
-## Things that already match
-LBPH radius 1 / 8 neighbours / 8x8 grid; 100x100 ROI; threshold 40; 2 blinks; head-turn 10 % of face width; motion threshold 0.03 over
-20 observations; 100 enrolment frames; verification every 2 frames; exactly-one-face rule; PBKDF2-HMAC-SHA256 with 600,000 iterations and Fernet;
-5 failed attempts then application-level wipe; 5-minute auto-lock; audit log.
+## 2. What still matches
 
-## Wording you can use for the evaluation section (all numbers are measured, see RESULTS_LFW.md)
-> To characterise the identity-verification stage independently of the acquisition hardware, we ran the matcher on the public LFW
-> dataset (62 identities with at least 20 images; identities split into development and test halves; K = 10 enrolment images per
-> identity; weights and threshold selected on the development half only). On the test half, LBPH alone achieved an AUC of 0.81 and an
-> equal-error rate of about 25 %, whereas the weighted fusion of LBPH, histogram and template scores did not improve on it (EER about
-> 30 %). At the configured threshold of 40 the fused score yielded FRR of 26-52 % and FAR of 9-38 % depending on the weights. These
-> unconstrained-photo results are a conservative benchmark and do not measure liveness, presentation-attack resistance or
-> in-device performance, which remain future work.
+Haar frontal-face detection; exactly one face per frame; 100x100 face crop; 100 enrolment samples; 2 blinks;
+head movement of 10 % of the face width, left then right, baseline over 10 observations; face detection every
+second frame during the liveness steps; PBKDF2-HMAC-SHA256 with 600,000 iterations and Fernet; application-level
+wipe; 5-minute auto-lock; audit log.
 
-## Disclosure
-The publisher's first concern is AI-generated content. If an AI assistant wrote or substantially edited the manuscript, code or
-documentation, state that in the acknowledgements/disclosure section as IEEE requires, and make sure every number in the paper can be
-traced to a file in this repository.
+In the code but, at the time of the version 9 check, not in the manuscript: camera and processing on worker
+threads; the quality check on enrolment samples and the removal of the 10 % furthest from the mean face; time
+limits (45 s for the liveness steps, 15 s for the match); one log row per attempt. Mention them if they are part
+of the submitted system.
+
+## 3. The evaluation sections
+
+What the results support (all numbers are in `RESULTS.md`, generated by `python evaluate.py`):
+
+<!-- wording:start -->
+> To characterise the identity-verification stage independently of the camera, the matcher was run through the application code on two public datasets: LFW (the 62 people with at least 20 photographs; unconstrained) and Olivetti/ORL (40 people, 10 photographs each; controlled). Identities were divided into a development half and a test half. Score calibration, fusion weights and the acceptance threshold were chosen on the development halves; the test halves were used only to report.
+> With an enrolment gallery that emulates the 100-frame enrolment and one photograph per decision, the equal-error rate on the test halves was 2.5 % (Olivetti) and 18.4 % (LFW). At the shipped threshold (35) the false-accept rate was 1.47 % (95 % interval 0.47 to 2.76 %) and 0.47 % (0.28 to 0.69 %), and the false-reject rate 3.3 % (1.2 to 6.5 %) and 50.1 % (44.9 to 55.8 %).
+> A weighted fusion of the LBPH score with the histogram and template scores did not improve on LBPH alone: with the weights (0.45, 0.20, 0.35) the equal-error rate was 6.7 % and 24.3 %, against 3.0 % and 19.9 % for LBPH alone (gallery of K photographs).
+> Compared with the earlier matcher (LBPH radius 1, 8x8 grid, histogram equalisation) the equal-error rate went from 6.7 % to 3.0 % (Olivetti) and from 25.3 % to 19.9 % (LFW) on the same detections.
+> Liveness and presentation-attack performance were not measured with live subjects. Sessions built from animated photographs were used only to check the session logic: a motionless photograph of the enrolled person was accepted in 0 of 92; a trembling one that never blinks in 0 of 92; liveness done by one face and the match by another in 1 of 64; the same with the identity binding switched off in 39 of 63; another person performing all cues in 2 of 208; an unseen photograph of the enrolled person performing all cues in 104 of 147 sessions. A replayed video that shows the blinks and the head movement is not distinguished from a person by these cues.
+<!-- wording:end -->
+
+What they do not support, and the paper must not say:
+
+- any liveness-detection rate, presentation-attack detection rate or end-to-end FAR/FRR for live use;
+- that the system resists replayed video (it does not; the simulated sessions show that an input with the cues
+  is accepted);
+- that the simulated sessions are experiments with people;
+- that the vault is encrypted.
+
+If the live trials of `TESTING_GUIDE.md` are run before resubmission, report them with the number of trials and
+the interval for every rate.
+
+## 4. Disclosure
+
+The publisher's first concern was AI-generated content. If an AI assistant wrote or substantially edited the
+manuscript, the code or the documentation, IEEE requires that to be stated in the acknowledgements. State it, and
+make sure every number in the paper can be traced to a file in this repository.
